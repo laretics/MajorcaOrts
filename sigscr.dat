@@ -2,11 +2,830 @@
 // Signal Type Logic Scripts
 //
 
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT CSAR30VL
+	extern float	block_state ();
+	extern float	route_set (); 
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float	next_state;	
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR)
+		if (!enabled ||	block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+	else  if ( next_state <=# SIGASP_STOP_AND_PROCEED  )
+		state = SIGASP_APPROACH_1;
+	else if ( next_state ==# SIGASP_CLEAR_2 || next_state ==# SIGASP_RESTRICTING )
+		state = SIGASP_CLEAR_2;
+	else
+		state = SIGASP_CLEAR_1;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+/////////////////////////////////
+SCRIPT Plaque_G-D
+	extern float	block_state ();
+	extern float	next_sig_lr ();
+	extern float	this_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	if (!enabled ||
+			this_sig_lr (SIGFN_NORMAL ) ==# SIGASP_STOP ||
+			next_sig_lr (SIGFN_NORMAL ) !=# SIGASP_APPROACH_3 ||
+			next_sig_lr (SIGFN_INFO ) ==# SIGASP_CLEAR_2 )
+		state = SIGASP_CLEAR_2;
+	else
+		state = SIGASP_APPROACH_3;
+
+	draw_state = def_draw_state (state);
+//////////////////////////////////////////////////////////////////////////////
+SCRIPT Pancarte_G-D
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+
+	state = SIGASP_APPROACH_3;
+	draw_state = def_draw_state (state);
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT CSRR30AAR60VL
+	extern float	block_state ();
+	extern float	route_set (); 
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float	next_state;	
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR)
+		if (!enabled ||	block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+	// contre voie interdite
+	//else if ( next_state ==# SIGASP_STOP )
+		//state = SIGASP_STOP;
+
+	//else if ( next_state ==# SIGASP_CLEAR_2 || next_state ==#SIGASP_RESTRICTING )
+			//state = SIGASP_APPROACH_2;
+
+	// vers Garage ou voie en impasse
+	//else if ( next_state ==# SIGASP_APPROACH_3 || next_sig_lr (SIGFN_INFO) ==# SIGASP_CLEAR_2 )
+	//		state = SIGASP_RESTRICTING;
+	//else  if ( route_set() ) //vers voie principale
+	//	if ( next_state <=# SIGASP_STOP_AND_PROCEED  )
+	//		state = SIGASP_APPROACH_1;
+	//	else if ( next_state ==# SIGASP_CLEAR_2 || next_state ==#SIGASP_RESTRICTING )
+	//		state = SIGASP_APPROACH_2;
+	//	else if ( sig_feature ( SIGFEAT_USER1) && next_state ==# SIGASP_APPROACH_1 )
+	//		state = SIGASP_APPROACH_3;
+	//	else
+	//		state = SIGASP_CLEAR_1;
+	// vers voie secondaire
+	else if ( next_state <=# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_CLEAR_2 )
+		state = SIGASP_RESTRICTING;
+	else
+		state = SIGASP_CLEAR_2;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT Info_0_7
+///////////////////////////////////////
+/// RM77 - SCRIPTS MODIFIES POUR OR ///
+///////////////////////////////////////
+	extern float	sig_feature ();
+	extern float	state;
+	extern float	draw_state;
+
+	float		Bit1;
+	float		Bit2;
+	float		Bit3;
+	float		Bit4;
+
+	Bit1 =	sig_feature ( SIGFEAT_USER1 );
+	Bit2 =	sig_feature ( SIGFEAT_USER2 );
+	Bit3 =	sig_feature ( SIGFEAT_USER3 );
+	Bit4 =	sig_feature ( SIGFEAT_USER4 );
+
+	if ( (bit4 && bit3 && bit2 && bit1 ) ||(bit4 && bit3) ||( bit4 && bit2 && bit1 ))
+		state = SIGASP_CLEAR_2;
+	else if (( bit4 && bit2 )|| ( bit3 && bit2 && bit1 ))
+		state = SIGASP_CLEAR_1;
+	else if ( (bit4 && bit1 ) || ( bit3 && bit2 ))
+		state = SIGASP_APPROACH_3;
+	else if ( bit4 || (bit3 && bit1) )
+		state = SIGASP_APPROACH_2;
+	else if ( bit3 || (bit2 && bit1))
+		state = SIGASP_APPROACH_1;
+	else if ( bit2 )
+		state = SIGASP_RESTRICTING;
+	else if ( bit1 )
+		state = SIGASP_STOP_AND_PROCEED;
+	else
+		state = SIGASP_STOP;
+
+	draw_state = def_draw_state ( state );
+
+/////////////////////////////////
+SCRIPT RM_Id3d
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if ( next_sig_lr ( SIGFN_NORMAL ) ==# SIGASP_STOP )
+		state = SIGASP_STOP;	
+	else 
+		state = next_sig_lr ( SIGFN_INFO );
+	draw_state = def_draw_state (state);
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT CSRR30AR30VL
+	extern float	block_state ();
+	extern float	route_set (); 
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float	next_state;	
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR)
+	{
+		if (!enabled ||	block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+	}
+	// contre voie interdite
+	else if ( next_state ==# SIGASP_STOP )
+		state = SIGASP_STOP;
+	// vers Garage
+	else if ( next_state ==# SIGASP_APPROACH_3 )
+		state = SIGASP_RESTRICTING;		
+	// vers voie secondaire
+	else if ( !route_set() )
+	{
+		if ( next_state <=# SIGASP_STOP_AND_PROCEED 
+				|| next_state ==# SIGASP_APPROACH_3 
+				|| next_state ==# SIGASP_CLEAR_2 )			
+			state = SIGASP_RESTRICTING;
+		else
+			state = SIGASP_CLEAR_2;
+	}
+	else
+	{
+		if ( next_state <=# SIGASP_STOP_AND_PROCEED  )
+			state = SIGASP_APPROACH_1;
+		else if ( next_state ==# SIGASP_CLEAR_2 || next_state ==#SIGASP_RESTRICTING )
+			state = SIGASP_APPROACH_2;
+		else
+			state = SIGASP_CLEAR_1;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+/////////////////////////////////
+SCRIPT CVM_horiz
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	float			has_number_plate;
+	float			has_gradient_plate;
+	float			next_state;
+
+	has_number_plate	= sig_feature (SIGFEAT_NUMBER_PLATE);
+	has_gradient_plate	= sig_feature (SIGFEAT_GRADIENT_PLATE);
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled || block_state() !=# BLOCK_CLEAR || !route_set())
+		if (has_gradient_plate)
+			state = SIGASP_STOP_AND_PROCEED;
+		else
+			state = SIGASP_STOP;
+	else if (next_state <=# SIGASP_STOP_AND_PROCEED  )
+		state = SIGASP_APPROACH_3;
+	else 		
+		state = SIGASP_APPROACH_3;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+	if (state ==# SIGASP_RESTRICTING && !has_gradient_plate)
+		draw_state = 1;
+	draw_state = def_draw_state (state);
+
+/////////////////////////////////
+SCRIPT  BM-CV
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR || !route_set())
+		state = SIGASP_STOP;
+	else
+		state = SIGASP_APPROACH_1;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+/////////////////////////////////
+SCRIPT RFF_2feux
+	extern float	block_state ();
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float		next_state;
+	float		evo;
+	
+	next_state	= next_sig_lr ( SIGFN_NORMAL );
+	evo 		= sig_feature(SIGFEAT_USER1);
+	
+	if ( !enabled || block_state()!=# BLOCK_CLEAR)
+		state = SIGASP_STOP;
+		
+	else if ( next_state ==# SIGASP_APPROACH_3 || next_state ==# SIGASP_STOP ) 
+		state = SIGASP_APPROACH_3;
+		
+	else
+		state = SIGASP_CLEAR_1;
+	
+	draw_state = def_draw_state (state);
+
+/////////////////////////////////
+SCRIPT RFF_2feux_Na
+	extern float	block_state ();
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float		next_state;
+	float		evo;
+	
+	next_state	= next_sig_lr ( SIGFN_NORMAL );
+	evo 		= sig_feature(SIGFEAT_USER1);
+	
+	if ( !enabled || block_state()!=# BLOCK_CLEAR)
+		state = SIGASP_STOP;
+		
+	else if ( next_state <=# SIGASP_APPROACH_3)
+		state = SIGASP_APPROACH_3;
+		
+	else
+		state = SIGASP_CLEAR_1;
+	
+	draw_state = def_draw_state (state);
+
+/////////////////////////////////
+SCRIPT CvNain
+	extern float	block_state ();
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	float		mUser1;
+	float		mDraw;
+
+	mUser1	= sig_feature (SIGFEAT_USER1);
+	state	= next_sig_lr (SIGFN_NORMAL);
+
+
+	if (!enabled || block_state() !=# BLOCK_CLEAR )
+		if ( !enabled || block_state() ==# BLOCK_JN_OBSTRUCTED || mUser1)
+			mDraw = SIGASP_STOP;	
+		else
+			mDraw = SIGASP_CLEAR_2;
+	else if ( next_sig_lr (SIGFN_NORMAL) ==# SIGASP_STOP )
+		mDraw = SIGASP_STOP;	
+	else
+		mDraw = SIGASP_CLEAR_2;
+
+	draw_state = def_draw_state (mDraw);
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT CSAAVL
+	extern float	block_state ();
+	extern float	route_set  (); 
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float		next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR)
+		if (!enabled ||	block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+
+	else if ( next_state ==# SIGASP_STOP ||next_state ==# SIGASP_STOP_AND_PROCEED  )
+		state = SIGASP_APPROACH_1;
+	else if ( sig_feature ( SIGFEAT_USER1) && next_state ==# SIGASP_APPROACH_1 )
+		state = SIGASP_APPROACH_2;
+	else
+		state = SIGASP_CLEAR_1;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+/////////////////////////////////
+/////////////////////////////////
+SCRIPT Carre
+	extern float	block_state ();
+	extern float	route_set  (); 
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled || block_state() !=# BLOCK_CLEAR) 
+		if (!enabled ||	block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+	else if (next_state <=# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_APPROACH_3 )
+		state = SIGASP_APPROACH_1;
+	else
+		state = SIGASP_CLEAR_1;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+/////////////////////////////////
+SCRIPT CSRR30AVL
+	extern float	block_state ();
+	extern float	route_set (); 
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float	next_state;	
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR )
+	{
+		if (!enabled ||	block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+	}
+	else if ( next_state ==# SIGASP_APPROACH_3 )
+		state = SIGASP_RESTRICTING;
+	else  if ( route_set() ) //vers voie principale
+		if ( next_state <=# SIGASP_STOP_AND_PROCEED  )
+			state = SIGASP_APPROACH_1;
+		else
+			state = SIGASP_CLEAR_1;
+	// vers voie secondaire
+	else if ( next_state <=# SIGASP_STOP_AND_PROCEED
+			|| next_state ==# SIGASP_CLEAR_2 )
+		state = SIGASP_RESTRICTING;
+	else
+		state = SIGASP_CLEAR_2;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+/////////////////////////////////
+SCRIPT Rappel_Ralentissement
+	extern float	block_state ();
+	extern float	route_set (); 
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float	next_state;	
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR)
+		if (!enabled ||	block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+	else  if ( route_set() ) //vers voie principale
+		if ( next_state <=# SIGASP_STOP_AND_PROCEED  )
+			state = SIGASP_APPROACH_1;
+		else
+			state = SIGASP_CLEAR_1;
+	else if ( next_state <=# SIGASP_STOP_AND_PROCEED 
+			|| next_state ==# SIGASP_CLEAR_2 )			
+		state = SIGASP_RESTRICTING;
+	else
+		state = SIGASP_CLEAR_2;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+/////////////////////////////////
+SCRIPT BAPR-AR30VL
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR || !route_set())
+		state = SIGASP_APPROACH_1;
+	else if (next_state <=# SIGASP_STOP_AND_PROCEED)
+		state = SIGASP_APPROACH_1;
+	else if ( next_state ==# SIGASP_CLEAR_2 || next_state ==# SIGASP_RESTRICTING )
+		state = SIGASP_CLEAR_2;
+	else
+		state = SIGASP_CLEAR_1;
+
+	draw_state = def_draw_state (state);
+/////////////////////////////////
+SCRIPT BAPR-AR60VL
+// Signal d'Annonce de BAPR A  (R) VL
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled || block_state() !=# BLOCK_CLEAR || !route_set())
+		state = SIGASP_APPROACH_1;
+	else if (next_state <=# SIGASP_STOP_AND_PROCEED)
+		state = SIGASP_APPROACH_1;
+	else if ( next_state ==# SIGASP_CLEAR_2 || next_state ==# SIGASP_RESTRICTING )
+		state = SIGASP_CLEAR_2;
+	else
+		state = SIGASP_CLEAR_1;
+
+	draw_state = def_draw_state (state);
+///////////////////////////////////
+SCRIPT CSAVLVL
+	extern float	block_state ();
+	extern float	route_set  (); 
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR)
+		if (!enabled ||	block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+	else if ( next_state <=# SIGASP_STOP_AND_PROCEED  )
+		state = SIGASP_APPROACH_1;
+	else if ( next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_CLEAR_2 )
+		state = SIGASP_APPROACH_2;
+	else
+		state = SIGASP_CLEAR_1;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+/////////////////////////////////
+SCRIPT exAL_CSAVL
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	float		mUser1;
+	float		mUser2;
+	float		mUser3;
+	float		mUser4;
+	float		next_state;
+
+	mUser1		= sig_feature (SIGFEAT_USER1);
+	mUser2		= sig_feature (SIGFEAT_USER2);
+	mUser3		= sig_feature (SIGFEAT_USER3);
+	mUser4		= sig_feature (SIGFEAT_USER4);
+	next_state		= next_sig_lr (SIGFN_NORMAL);
+
+	if (!enabled || block_state() !=# BLOCK_CLEAR )
+		if ( !route_set() || block_state() ==# BLOCK_JN_OBSTRUCTED)
+			state = SIGASP_STOP;	
+		else if ( mUser1 )
+			state = SIGASP_RESTRICTING;	
+		else
+			state = SIGASP_STOP_AND_PROCEED;
+	else
+		if ( next_state ==# SIGASP_STOP )
+			state = SIGASP_STOP_AND_PROCEED;
+		else if ( next_state <=# SIGASP_RESTRICTING)
+			state = SIGASP_APPROACH_1;
+		else if ( mUser2 && (next_state ==# SIGASP_APPROACH_1 ||
+				next_state ==# SIGASP_APPROACH_3))
+			state = SIGASP_APPROACH_2;
+		else if ( mUser3 && next_state <=# SIGASP_APPROACH_3 )
+			state = SIGASP_CLEAR_1;
+		else 
+			state = SIGASP_CLEAR_2;
+	draw_state = def_draw_state (state);
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT BM-B
+	extern float	this_sig_mr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+
+	state = this_sig_mr (SIGFN_NORMAL, SIGFN_INFO, SIGFN_DISTANCE);
+
+// Get draw state
+	draw_state = def_draw_state (state);
+/////////////////////////////////
+
+SCRIPT BM-CA
+	extern float	block_state ();
+	extern float	route_set  (); 
+	extern float	next_sig_lr ();
+	extern float	sig_feature ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled; 
+
+	float	next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL, SIGFN_INFO);
+	if (!enabled ||	block_state() !=# BLOCK_CLEAR || !route_set() )	
+		state = SIGASP_STOP;
+	else if (next_state ==# SIGASP_RESTRICTING )
+		state = SIGASP_STOP;
+	else if	( next_state <=# SIGASP_STOP_AND_PROCEED )
+		state = SIGASP_APPROACH_1;
+	else
+		state = SIGASP_CLEAR_2;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT RM_OrgVoie
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+
+	state = SIGASP_CLEAR_2;
+// Get draw state
+	draw_state = def_draw_state (state);
 
 ///////////////////////////////////////////////////////////////////////////////
-SCRIPT JP3Light
 
-// Japanese 3 light signal head
+SCRIPT Avertissement
+
+	extern float	block_state ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	next_sig_lr ();
+	extern float	draw_state;
+	extern float	enabled;
+
+	float		next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	if ( next_state <=# SIGASP_STOP_AND_PROCEED )		
+		state = SIGASP_APPROACH_1;
+	else
+		state = SIGASP_CLEAR_2;
+	
+// Get draw state
+	draw_state = def_draw_state (state);
+/////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT SP3RAB
+
+// Señal Española 3 luces Salida en BT / BEM con rebase
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||
+		block_state() ==# BLOCK_JN_OBSTRUCTED ) 	// Block ahead not connected?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		if (block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+		{
+			state = SIGASP_RESTRICTING;
+		}
+
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3MSRBEM
+
+// Señal Española 3 luces Salida en BT / BEM Mono Bajo con rebase
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||
+		block_state() ==# BLOCK_JN_OBSTRUCTED ) 	// Block ahead not connected?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		if (block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+		{
+			state = SIGASP_RESTRICTING;
+		}
+
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT REBASE
+
+// Luz blanca rebase
+
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	this_sig_mr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	state = this_sig_mr (SIGFN_NORMAL);
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT SP2MR
+
+// Señal Final via topera anden
+// válida para:	Final topera anden estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP2MF
+
+// Señal Española 2 focos regimen de maniobras (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		// block_state() !=# BLOCK_CLEAR ||		// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING)
+		{
+			state = SIGASP_RESTRICTING;
+		}
+		else // if (next_state ==# SIGASP_APPROACH_3 ||
+			//   next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_RESTRICTING;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+ 
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT BraAvPermR
+
+// Señal Española 3 luces Avanzada Permisiva Normalmente Roja (BA)
 
 	extern float	block_state ();
 	extern float	route_set ();
@@ -22,7 +841,7 @@ SCRIPT JP3Light
 		block_state() !=# BLOCK_CLEAR ||		// Block ahead not clear?
 		!route_set())							// Switch not set as per link?
 	{
-		state = SIGASP_STOP;
+		state = SIGASP_STOP_AND_PROCEED;
 	}
 // Signal head is enabled and the block ahead is clear - update based on state of
 // next signal head.
@@ -30,9 +849,55 @@ SCRIPT JP3Light
 	{
 		next_state = next_sig_lr (SIGFN_NORMAL);
 
-		if (next_state ==# SIGASP_STOP)
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
 		{
-			state = SIGASP_APPROACH_3;
+			state = SIGASP_APPROACH_1;
+		}
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_CLEAR_1)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT BraPermR
+
+// Señal Española 3 luces Permisiva normalmente Roja.
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||		// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+	}
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		{
+			state = SIGASP_APPROACH_1;
 		}
 		else // if (next_state ==# SIGASP_APPROACH_3 ||
 			//   next_state ==# SIGASP_CLEAR_2)
@@ -45,9 +910,1741 @@ SCRIPT JP3Light
 	draw_state = def_draw_state (state);
 
 ///////////////////////////////////////////////////////////////////////////////
-SCRIPT JP4Light
 
-// Japanese 4 light signal head
+
+SCRIPT BraEntradaRAB
+
+// Señal Española 2 luces + 1 Entrada
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+
+	{
+		// next_state = next_sig_lr (SIGFN_NORMAL);
+
+	// if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		// {
+			state = SIGASP_APPROACH_1;
+		// }
+		
+		// else
+
+		// {
+		//	state = SIGASP_CLEAR_2;
+		// }
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT BraSalidaLink
+
+// Señal Española 4 luces salida BAB Link Aguja (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else if ( !route_set() )
+		{
+			next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if ( next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || 
+				next_state ==# SIGASP_RESTRICTING )
+			{
+			state = SIGASP_APPROACH_1;
+			}
+		else
+			{
+			state = SIGASP_CLEAR_1;
+			}
+	}
+
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT MonoBraSLink
+
+// Señal Española 4 luces salida BAB Link Aguja (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else if ( !route_set() )
+		{
+			next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if ( next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || 
+				next_state ==# SIGASP_RESTRICTING )
+			{
+			state = SIGASP_APPROACH_1;
+			}
+		else
+			{
+			state = SIGASP_CLEAR_1;
+			}
+	}
+
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT MonoBraSalida
+// Señal Española 4 luces salida BAB (BA)
+ extern float block_state ();
+ extern float route_set ();
+ extern float next_sig_lr ();
+ extern float def_draw_state ();
+ extern float state;
+ extern float draw_state;
+ extern float enabled;
+ float   next_state;
+// If required, show the 'stop' indication.
+ if (!enabled ||        // Not enabled/cleared to show natural state?
+  block_state() !=# BLOCK_CLEAR || !route_set())  // Block ahead not clear?
+         // Switch not set as per link?
+ {
+  state = SIGASP_STOP;
+ }
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+ 
+ else
+ {
+  next_state = next_sig_lr (SIGFN_NORMAL);
+   if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+  {
+   state = SIGASP_APPROACH_1;
+  }
+  
+  else
+  {
+   state = SIGASP_CLEAR_2;
+  }
+ }
+// Get draw state
+ draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT BraSalida
+// Señal Española 4 luces salida BAB (BA)
+ extern float block_state ();
+ extern float route_set ();
+ extern float next_sig_lr ();
+ extern float def_draw_state ();
+ extern float state;
+ extern float draw_state;
+ extern float enabled;
+ float   next_state;
+// If required, show the 'stop' indication.
+ if (!enabled ||        // Not enabled/cleared to show natural state?
+  block_state() !=# BLOCK_CLEAR || !route_set())  // Block ahead not clear?
+         // Switch not set as per link?
+ {
+  state = SIGASP_STOP;
+ }
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+ 
+ else
+ {
+  next_state = next_sig_lr (SIGFN_NORMAL);
+   if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+  {
+   state = SIGASP_APPROACH_1;
+  }
+  
+  else
+  {
+   state = SIGASP_CLEAR_2;
+  }
+ }
+// Get draw state
+ draw_state = def_draw_state (state);
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT BraEntrada
+// Señal Brañuelas 4 luces Entrada BAD (BA)
+ extern float block_state ();
+ extern float route_set ();
+ extern float next_sig_lr ();
+ extern float def_draw_state ();
+ extern float state;
+ extern float draw_state;
+ extern float enabled;
+ float   next_state;
+// If required, show the 'stop' indication.
+ if (!enabled ||        // Not enabled/cleared to show natural state?
+  block_state() !=# BLOCK_CLEAR)  // Block ahead not clear?
+         // Switch not set as per link?
+ {
+  state = SIGASP_STOP;
+ }
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+ 
+ 
+ else if ( !route_set() ) 
+ {
+  
+  state = SIGASP_APPROACH_1;
+  
+ }
+ 
+ else
+ {
+  next_state = next_sig_lr (SIGFN_NORMAL);
+  if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+   // || next_state ==# SIGASP_CLEAR_1)
+  {
+   state = SIGASP_APPROACH_1;
+  }
+  
+  else
+  {
+   state = SIGASP_CLEAR_2;
+  }
+ }
+// Get draw state
+ draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT BraAvanzada
+// Señal Brañuelas 3 luces Avanzada Permisiva (BA)
+ extern float block_state ();
+ extern float route_set ();
+ extern float next_sig_lr ();
+ extern float def_draw_state ();
+ extern float state;
+ extern float draw_state;
+ extern float enabled;
+ float   next_state;
+// If required, show the 'stop' indication.
+ if (block_state() !=# BLOCK_CLEAR)   // Not enabled/cleared to show natural state?
+           // Block ahead not clear?
+           // Switch not set as per link?
+ {
+  state = SIGASP_STOP_AND_PROCEED;
+ }
+ // else if (!enabled )
+ // {
+ // state = SIGASP_CLEAR_2;
+ // }
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+ else
+ {
+  next_state = next_sig_lr (SIGFN_NORMAL);
+  if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+  {
+   state = SIGASP_APPROACH_1;
+  }
+  else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_CLEAR_1)
+   //   next_state ==# SIGASP_CLEAR_2)
+  {
+   state = SIGASP_APPROACH_2;
+  }
+  else
+  {
+   state = SIGASP_CLEAR_2;
+  }
+ }
+// Get draw state
+ draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT BraAvanzada2
+// Señal Brañuelas 3 luces Avanzada Permisiva (BA)
+ extern float block_state ();
+ extern float route_set ();
+ extern float next_sig_lr ();
+ extern float def_draw_state ();
+ extern float state;
+ extern float draw_state;
+ extern float enabled;
+ float   next_state;
+// If required, show the 'stop' indication.
+ if (block_state() !=# BLOCK_CLEAR)   // Not enabled/cleared to show natural state?
+           // Block ahead not clear?
+           // Switch not set as per link?
+ {
+  state = SIGASP_STOP_AND_PROCEED;
+ }
+ // else if (!enabled )
+ // {
+ // state = SIGASP_CLEAR_2;
+ // }
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+ else
+ {
+  next_state = next_sig_lr (SIGFN_NORMAL);
+  if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+  {
+   state = SIGASP_APPROACH_1;
+  }
+  else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_CLEAR_1)
+   //   next_state ==# SIGASP_CLEAR_2)
+  {
+   state = SIGASP_APPROACH_2;
+  }
+  else
+  {
+   state = SIGASP_CLEAR_2;
+  }
+ }
+// Get draw state
+ draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT OAvanzada
+
+// Señal Española Avanzada 2 luces (BT / BEM)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float		next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	
+
+	if ( next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+	{
+		state = SIGASP_APPROACH_1;
+	}
+	else if (next_state ==# SIGASP_APPROACH_1)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+	
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT OEntrada
+
+// Señal Oeste 4 luces Entrada BAD (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else if ( !route_set() ) 
+	{
+		
+		state = SIGASP_APPROACH_1;
+		
+	}
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3P
+
+// Señal Española 3 luces Permisiva (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (block_state() !=# BLOCK_CLEAR)			// Not enabled/cleared to show natural state?
+											// Block ahead not clear?
+											// Switch not set as per link?
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+	}
+
+	// else if (!enabled )
+	// {
+	//	state = SIGASP_CLEAR_2;
+	// }
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		else // if (next_state ==# SIGASP_APPROACH_3 ||
+			//   next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3PR
+
+// Señal Española 3 luces Permisiva normalmente Roja.
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||		// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+	}
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		else // if (next_state ==# SIGASP_APPROACH_3 ||
+			//   next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT SP3AP
+
+// Señal Española 3 luces Avanzada Permisiva (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (block_state() !=# BLOCK_CLEAR)			// Not enabled/cleared to show natural state?
+											// Block ahead not clear?
+											// Switch not set as per link?
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+	}
+
+	// else if (!enabled )
+	// {
+	//	state = SIGASP_CLEAR_2;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_APPROACH_2 || next_state ==# SIGASP_CLEAR_1)
+			//   next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3APR
+
+// Señal Española 3 luces Avanzada Permisiva Normalmente Roja (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||		// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+	}
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_CLEAR_1)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4EBAB // MODIFICADA VIA LIBRE SIGUIENTE SEÑAL ANUNCIO PRECAUCION
+
+// Señal Española 4 luces Entrada BAB (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else if ( !route_set() ) 
+	{
+				state = SIGASP_APPROACH_1;
+	}
+
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4EBABAP
+
+// Señal Española 4 luces Entrada BAB (BA) capaz de anuncio de precaución si salida a desviada.
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+	else if ( !route_set() )
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+		{
+		       	state = SIGASP_APPROACH_1;
+		}
+		else
+		{
+			state = SIGASP_APPROACH_2;
+		}
+	}
+	else
+	{
+		next_state = next_sig_lr (SIGFN_INFO);
+
+		if (next_state ==# SIGASP_APPROACH_2)
+		{
+			state = SIGASP_APPROACH_1;
+		}
+	        else
+	        {
+                next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+		{
+			state = SIGASP_APPROACH_1;
+		}
+                else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	        }
+         }
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT SP3E
+
+// Señal Española 2 luces + 1 Entrada
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+
+	{
+		// next_state = next_sig_lr (SIGFN_NORMAL);
+
+	// if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		// {
+			state = SIGASP_APPROACH_1;
+		// }
+		
+		// else
+
+		// {
+		//	state = SIGASP_CLEAR_2;
+		// }
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3
+
+// Señal Española 3 luces (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4MSBAB
+
+// Señal Española mono bajo 4 luces salida BAB (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4MSBABL
+
+// Señal Española 4 luces salida BAB Link Aguja (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else if ( !route_set() )
+		{
+			state = SIGASP_APPROACH_1;
+		}
+
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_1;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4MD
+
+// Señal Española mono bajo 4 luces indicador entrada
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 // if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+		 
+		 if ( block_state() !=# BLOCK_CLEAR )
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (!route_set())
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPIA100
+
+
+// Señal Señal Española Panel Luminoso Desviada 100
+
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (!route_set() || next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (next_state ==# SIGASP_APPROACH_1)
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPIA60
+
+
+// Señal Señal Española Panel Luminoso Desviada 60
+
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (!route_set() || next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (next_state ==# SIGASP_APPROACH_1)
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPIA80
+
+
+// Señal Señal Española Panel Luminoso Desviada 80
+
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if ( !route_set() || next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (next_state ==# SIGASP_APPROACH_1)
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT SPIAD60
+
+// Señal Española Panel Luminoso Desviada Derecha 60
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (route_set())
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPIAI60
+
+// Señal Española Panel Luminoso Desviada Izquierda 60
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (route_set())
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+SCRIPT SPDID
+
+// Señal Española cuernos direccionales Izquierda - Derecha
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (!route_set())
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPDIF
+
+// Señal Española cuernos direccionales Izquierda - Derecha
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (!route_set())
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPDDF
+
+// Señal Española cuernos direccionales Izquierda - Derecha
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (!route_set())
+
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPDI
+
+// Señal Española cuernos tres direccionales - Izquierda
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (!route_set())
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPDF
+
+// Señal Española cuernos tres direccionales - Frente
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (!route_set())
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SPDD
+
+// Señal Española cuernos tres direcciones - Derecha
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	// if (!enabled ||								// Not enabled/cleared to show natural state?
+	//	block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+	//								// Switch not set as per link?
+	// {
+	//	state = SIGASP_STOP;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	// else
+
+	// {
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (!route_set())
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	// }
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT SP4SBABL
+
+// Señal Española 4 luces salida BAB Link Aguja (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else if ( !route_set() )
+		{
+			state = SIGASP_APPROACH_1;
+		}
+
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_1;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4SBAB
+
+// Señal Española 4 luces salida BAB (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP2MB
+
+// Señal Española 2 luces mono bajo (BA)
 
 	extern float	block_state ();
 	extern float	route_set ();
@@ -69,18 +2666,146 @@ SCRIPT JP4Light
 // next signal head.
 	else
 	{
+		state = SIGASP_STOP_AND_PROCEED;
+
+		// next_state = next_sig_lr (SIGFN_NORMAL);
+
+		// if (next_state ==# SIGASP_STOP)
+		// {
+			state = SIGASP_STOP_AND_PROCEED;
+		// }
+		// else // if (next_state ==# SIGASP_APPROACH_3 ||
+			//   next_state ==# SIGASP_CLEAR_2)
+		// {
+		//	state = SIGASP_STOP_AND_PROCEED;
+		// }
+	}
+		
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP2MV
+
+// Mono (Home) 2 estados
+// válida para:	Salida de ramales
+//			Interior de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP2M
+
+// Señal Española 2 focos regimen de maniobras (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		// block_state() !=# BLOCK_CLEAR ||		// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
 		next_state = next_sig_lr (SIGFN_NORMAL);
 
-		if (next_state ==# SIGASP_STOP)
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING)
 		{
-			state = SIGASP_APPROACH_2;
+			state = SIGASP_RESTRICTING;
 		}
-		else if (next_state ==# SIGASP_APPROACH_2)
-		{
-			state = SIGASP_APPROACH_3;
-		}	
-		else //if (next_state ==# SIGASP_APPROACH_3 ||
+		else // if (next_state ==# SIGASP_APPROACH_3 ||
 			//   next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_RESTRICTING;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4EBAD
+
+// Señal Española 4 luces Entrada BAD (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else if ( !route_set() ) 
+	{
+		
+		state = SIGASP_APPROACH_1;
+		
+	}
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
 		{
 			state = SIGASP_CLEAR_2;
 		}
@@ -88,5 +2813,1975 @@ SCRIPT JP4Light
 
 // Get draw state
 	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4SBAD
+
+// Señal Española 4 luces Salida BAD (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||
+		!route_set() )		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4MSBAD
+
+// Señal Española 4 luces Entrada BAD (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||
+		!route_set() )		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT SP3P200
+
+// Señal Española 3 luces Permisiva (BA) ASFA 200
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (block_state() !=# BLOCK_CLEAR)			// Not enabled/cleared to show natural state?
+											// Block ahead not clear?
+											// Switch not set as per link?
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+	}
+
+	// else if (!enabled )
+	// {
+	//	state = SIGASP_CLEAR_2;
+	// }
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_APPROACH_2)
+			//   next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_CLEAR_1;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4EBAD200
+
+// Señal Española 4 luces Entrada BAD (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else if ( !route_set() ) 
+	{
+		
+		state = SIGASP_APPROACH_1;
+		
+	}
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_APPROACH_2)
+
+		{
+			state = SIGASP_CLEAR_1;
+		}
+
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4SBAD200
+
+// Señal Española 4 luces Salida BAD tipo 200 (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||
+		!route_set() )		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_APPROACH_2)
+
+		{
+			state = SIGASP_CLEAR_1;
+		}
+
+
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4SBAD200MB
+
+// Señal Española 4 luces MONO Salida BAD tipo 200 (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||
+		!route_set() )		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_APPROACH_2)
+
+		{
+			state = SIGASP_CLEAR_1;
+		}
+
+
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT SP4SBAB200
+
+// Señal Española 4 luces salida BAB tipo 200 (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_APPROACH_2)
+
+		{
+			state = SIGASP_CLEAR_1;
+		}
+
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4SBAB200MB
+
+// Señal Española 4 luces MONO salida BAB tipo 200 (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_APPROACH_2)
+
+		{
+			state = SIGASP_CLEAR_1;
+		}
+
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT SP3AP200
+
+// Señal Española 3 luces Avanzada Permisiva tipo 200 (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (block_state() !=# BLOCK_CLEAR)			// Not enabled/cleared to show natural state?
+											// Block ahead not clear?
+											// Switch not set as per link?
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+	}
+
+	// else if (!enabled )
+	// {
+	//	state = SIGASP_CLEAR_2;
+	// }
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		else if (next_state ==# SIGASP_APPROACH_1) // || next_state ==# SIGASP_CLEAR_1)
+			//   next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3200
+
+// Señal Española 3 luces BAB tipo 200 (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		 if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+
+		else if (next_state ==# SIGASP_APPROACH_1 || next_state ==# SIGASP_APPROACH_2)
+
+		{
+			state = SIGASP_CLEAR_1;
+		}
+
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+SCRIPT SP3APD
+
+// Señal Española 3 luces de Parada Diferida 
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR || !route_set())		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+	
+	else
+	{
+		state = SIGASP_APPROACH_1;
+	}
+
+
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT ESRNIndSal
+
+// Señal indicadora de salida: muestra el estado de la señal de salida
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float		next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	
+
+	if ( next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+	{
+		state = SIGASP_APPROACH_1;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_1;
+	}
+
+	
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP2AV
+
+// Señal Española Avanzada 2 luces (BT / BEM)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float		next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+	
+
+	if ( next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+	{
+		state = SIGASP_APPROACH_1;
+	}
+	else if (next_state ==# SIGASP_APPROACH_1)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+	
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3SBEML
+
+// Señal Española 3 luces Salida en BT / BEM (sin anuncio de parada) con Link
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3MSBEML
+
+// Señal Española 3 luces Salida en BT / BEM Mono Bajo (sin anuncio de parada) con Link
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3SBEM
+
+// Señal Española 3 luces Salida en BT / BEM (sin anuncio de parada)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)				// Block ahead not clear?
+		// !route_set()) 							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP3MSBEM
+
+// Señal Española 3 luces Salida en BT / BEM Mono Bajo (sin anuncio de parada)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)				// Block ahead not clear?
+		// !route_set()  							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+// MECANICAS
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNSemHome
+
+// Semaforo Principal (Home) 3 estados
+// válida para:	Block System
+//			Entrada de estación
+//			Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||					// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||	// Block ahead not clear?
+		!route_set())				// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else 		//if (next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNSemHome2
+
+// Semaforo Principal (Home) 2 estados
+// válida para:	Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||					// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||	// Block ahead not clear?
+		!route_set())				// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		//next_state = next_sig_lr (SIGFN_NORMAL);
+
+		//if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		//{
+		//	state = SIGASP_APPROACH_2;
+		//}
+		//else 		//if (next_state ==# SIGASP_CLEAR_2)
+		//{
+			state = SIGASP_CLEAR_2;
+		//}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNSemEntr
+
+// Semaforo Principal Entrada 3 estados
+// válida para:	Entrada de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||					// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR )		// Block ahead not clear?
+	{
+		state = SIGASP_STOP;
+	}
+	else if (!route_set())				// Entrada en via desviada
+		{
+			state = SIGASP_APPROACH_2;
+		}
+	
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else 		//if (next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT SMSemEntr
+
+// Semaforo Principal Entrada 3 estados
+// válida para:	Entrada de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||					// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR )		// Block ahead not clear?
+	{
+		state = SIGASP_STOP;
+	}
+	else if (!route_set())				// Entrada en via desviada
+		{
+			state = SIGASP_APPROACH_2;
+		}
+	
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else 		//if (next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNSemHome4
+
+// Semaforo Principal (Home) 4 estados (con autorización de rebase)
+// válida para:	Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||
+		block_state() ==# BLOCK_JN_OBSTRUCTED ||	// Block ahead not connected?
+		!route_set())				// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		if (block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+		{
+			state = SIGASP_STOP_AND_PROCEED;
+		}
+		else
+		{
+			next_state = next_sig_lr (SIGFN_NORMAL);
+
+			if (next_state ==# SIGASP_STOP)
+			{
+				state = SIGASP_APPROACH_2;
+			}
+			else 		//if (next_state ==# SIGASP_CLEAR_2)
+			{
+				state = SIGASP_CLEAR_2;
+			}
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNSemHome3
+
+// Semaforo Principal (Home) 3 estados (con autorización de rebase)
+// válida para:	Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||
+		block_state() ==# BLOCK_JN_OBSTRUCTED ||	// Block ahead not connected?
+		!route_set())				// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		if (block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+		{
+			state = SIGASP_STOP_AND_PROCEED;
+		}
+		else
+		{
+			//next_state = next_sig_lr (SIGFN_NORMAL);
+
+			//if (next_state ==# SIGASP_STOP)
+			//{
+			//	state = SIGASP_APPROACH_2;
+			//}
+			//else 		//if (next_state ==# SIGASP_CLEAR_2)
+			//{
+				state = SIGASP_CLEAR_2;
+			//}
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNSemAux4
+
+// Brazo auxiliar de Semaforo Principal (Home) 4 estados
+// válida para:	Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	this_sig_mr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	state = this_sig_mr (SIGFN_NORMAL);
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNSemMan
+
+// Semaforo Maniobras (Home) 2 estados
+// válida para:	Salida de ramales
+//			Interior de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNPanHome
+
+// Pantalla Principal (Home) 2 estados
+// válida para:	Salida de ramales
+//			Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT SMSembif
+
+// Pantalla Principal (Home) 2 estados
+// válida para:	Salida de ramales
+//			Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNPanEnt
+
+// Pantalla Principal (Home) 2 estados
+// válida para:	Entrada de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||					// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR )		// Block ahead not clear?
+	{
+		state = SIGASP_STOP;
+	}
+	else if (!route_set())				// Entrada en via desviada
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else 		//if (next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNPanMani
+
+// Pantalla Maniobras (Home) 2 estados
+// válida para:	Salida de ramales
+//			Interior de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNMonoRojo
+
+// Pantalla Principal (Home) 2 estados
+// válida para:	Salida de ramales
+//			Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNMonoMani
+
+// Pantalla Principal (Home) 2 estados
+// válida para:	Salida de ramales
+//			Salida de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNDAmDist
+
+// Disco Amarillo (Avanzada) 2 estados
+// válida para:	Avanzada de Semaforo principal
+//					Pantalla Principal
+
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+
+	if ( // !enabled ||							// Not enabled/cleared to show natural state?
+		next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		if (next_state ==# SIGASP_APPROACH_2)
+		{
+			state = SIGASP_APPROACH_3;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT SMAvanzada
+
+// Disco Amarillo (Avanzada) 2 estados
+// válida para:	Avanzada de Semaforo principal
+//					Pantalla Principal
+
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+
+	if ( // !enabled ||							// Not enabled/cleared to show natural state?
+		next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		if (next_state ==# SIGASP_APPROACH_2)
+		{
+			state = SIGASP_APPROACH_3;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT smAvanzadanotri
+
+// Disco Amarillo (Avanzada) 2 estados
+// válida para:	Avanzada de Semaforo principal
+//					Pantalla Principal
+
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+
+	if ( // !enabled ||							// Not enabled/cleared to show natural state?
+		next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		if (next_state ==# SIGASP_APPROACH_2)
+		{
+			state = SIGASP_APPROACH_3;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNDAmAux
+
+// Triángulo auxiliar de Disco Amarillo
+// válida para:	Avanzada de señal principal
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	this_sig_mr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	state = this_sig_mr (SIGFN_DISTANCE);
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNDRoDist
+
+// Disco Rojo (Avanzada) 2 estados
+// válida para:	Avanzada de Punto protegido
+
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+
+	if ( // !enabled ||							// Not enabled/cleared to show natural state?
+		next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		if (next_state ==# SIGASP_APPROACH_2)
+		{
+			state = SIGASP_APPROACH_3;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNDRoDist1
+
+// Disco Rojo (Avanzada) 2 estados
+// válida para:	Avanzada de Punto protegido
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if ( // !enabled ||							// Not enabled/cleared to show natural state?
+		next_sig_lr (SIGFN_NORMAL) ==# SIGASP_STOP)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNDRoDist2
+
+// Disco Rojo (Avanzada) 2 estados
+// válida para:	Avanzada de Punto protegido
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if ( // !enabled ||							// Not enabled/cleared to show natural state?
+		next_sig_lr (SIGFN_NORMAL) ==# SIGASP_STOP)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNPuntProt
+
+// Punto protegido 2 estados
+// válida para:	Entrada de estación
+//		Acceso a apartaderos
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_APPROACH_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT CASemEn2
+
+// Punto protegido 2 estados
+// válida para:	Entrada de estación
+//		Acceso a apartaderos
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_APPROACH_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNPuntEntr
+
+// Punto protegido 2 estados
+// válida para:	Entrada de estación
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	if (!enabled ||					// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR )		// Block ahead not clear?
+	{
+		state = SIGASP_STOP;
+	}
+	else if (!route_set())				// Entrada en via desviada
+		{
+			state = SIGASP_APPROACH_2;
+		}
+	
+	else
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+		{
+			state = SIGASP_APPROACH_2;
+		}
+		else 		//if (next_state ==# SIGASP_CLEAR_2)
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNOcul
+
+// Señal Oculta 2 estados
+// válida para:	Salida de estación en BT
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||				// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_CLEAR_2;
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNIndDirec
+
+// Indicador de dirección para aguja
+// válida para:	Agujas
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if ( !route_set() )
+		state = SIGASP_APPROACH_2;
+	else
+		state = SIGASP_CLEAR_2;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNCalce
+
+// Calce descarrilador
+// válida para:	Agujas
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if ( !route_set() )
+		state = SIGASP_APPROACH_2;
+	else
+		state = SIGASP_CLEAR_2;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT ESRNSemDir
+
+// Semaforo Indicador de dirección 
+// válida para:	Bifurcaciones
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+
+	if ( !route_set() )
+		state = SIGASP_APPROACH_2;
+	else
+		state = SIGASP_CLEAR_2;
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT CAvanzada
+// Disco Amarillo (Avanzada) 2 estados
+// válida para: Avanzada de Semaforo principal
+// Pantalla Principal
+extern float def_draw_state ();
+extern float next_sig_lr ();
+extern float state;
+extern float draw_state;
+extern float enabled;
+float next_state;
+next_state = next_sig_lr (SIGFN_NORMAL);
+if ( // !enabled || // Not enabled/cleared to show natural state?
+next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+{
+state = SIGASP_APPROACH_2;
+}
+else
+{
+if (next_state ==# SIGASP_APPROACH_2)
+{
+state = SIGASP_APPROACH_3;
+}
+else
+{
+state = SIGASP_CLEAR_2;
+}
+}
+
+// Get draw state
+draw_state = def_draw_state (state);
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT CADiscoRojo
+
+// Disco Rojo (Avanzada) 2 estados
+// válida para:	Avanzada de Punto protegido
+
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+
+	if ( // !enabled ||							// Not enabled/cleared to show natural state?
+		next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		if (next_state ==# SIGASP_APPROACH_2)
+		{
+			state = SIGASP_APPROACH_3;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+SCRIPT disrojDP
+
+// Disco Amarillo (Avanzada) 2 estados
+// válida para:	Avanzada de Semaforo principal
+//					Pantalla Principal
+
+	extern float	def_draw_state ();
+	extern float	next_sig_lr ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+	next_state = next_sig_lr (SIGFN_NORMAL);
+
+	if ( // !enabled ||							// Not enabled/cleared to show natural state?
+		next_state ==# SIGASP_STOP || next_state ==# SIGASP_RESTRICTING || next_state ==# SIGASP_STOP_AND_PROCEED)
+	{
+		state = SIGASP_APPROACH_2;
+	}
+	else
+	{
+		if (next_state ==# SIGASP_APPROACH_2)
+		{
+			state = SIGASP_APPROACH_3;
+		}
+		else
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+
+// Get draw state
+	draw_state = def_draw_state (state);
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4MEBAD
+
+// Señal Española 4 luces Mono Entrada BAD (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else if ( !route_set() ) 
+	{
+		
+		state = SIGASP_APPROACH_1;
+		
+	}
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP4MEBAB
+
+// Señal Española 4 luces Mono Entrada BAD (BA)
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR)		// Block ahead not clear?
+									// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+
+// Signal head is enabled and the block ahead is clear - update based on state of
+// next signal head.
+
+	
+	
+	else if ( !route_set() ) 
+	{
+		
+		state = SIGASP_APPROACH_1;
+		
+	}
+	
+	else
+
+	{
+		next_state = next_sig_lr (SIGFN_NORMAL);
+
+		if (next_state ==# SIGASP_STOP || next_state ==# SIGASP_STOP_AND_PROCEED || next_state ==# SIGASP_RESTRICTING)
+			// || next_state ==# SIGASP_CLEAR_1)
+
+		{
+			state = SIGASP_APPROACH_1;
+		}
+		
+		else
+
+		{
+			state = SIGASP_CLEAR_2;
+		}
+	}
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+SCRIPT SP2MBEF
+
+// Señal Española 2 luces mono bajo (BA) España
+
+	extern float	block_state ();
+	extern float	route_set ();
+	extern float	next_sig_lr ();
+	extern float	def_draw_state ();
+	extern float	state;
+	extern float	draw_state;
+	extern float	enabled;
+	float			next_state;
+
+// If required, show the 'stop' indication.
+	if (!enabled ||								// Not enabled/cleared to show natural state?
+		block_state() !=# BLOCK_CLEAR ||		// Block ahead not clear?
+		!route_set())							// Switch not set as per link?
+	{
+		state = SIGASP_STOP;
+	}
+	else
+	{
+		state = SIGASP_STOP_AND_PROCEED;
+
+	}
+		
+
+// Get draw state
+	draw_state = def_draw_state (state);
+
+///////////////////////////////////////////////////////////////////////////////
 
 // End of File
